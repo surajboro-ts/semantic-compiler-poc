@@ -311,6 +311,10 @@ mark{background:rgba(113,161,244,.24);color:inherit;border-radius:2px;padding:0 
    screen this section -- not the page -- is what scrolls */
 #auth{min-height:100vh;max-height:100vh;overflow-y:auto;scrollbar-gutter:stable;
   align-items:center;padding:clamp(var(--s3),4.5vh,var(--s5)) var(--s3)}
+/* the same bar the app carries, with only the mark on it: the form is already part
+   of the product, so the header is there before the product is */
+#auth .authhdr{position:fixed;top:0;left:0;right:0;justify-content:flex-start}
+#auth{padding-top:calc(56px + clamp(var(--s3),4.5vh,var(--s5)))}
 
 #auth.on{display:flex}
 #auth .block{width:560px;margin:0 auto;padding-bottom:6vh}
@@ -1442,6 +1446,16 @@ textarea.block:focus{border-color:var(--accent)}
 
 <!-- ================= AUTH ================= -->
 <section id="auth" class="screen">
+  <header class="hdr authhdr">
+    <span class="brand" aria-label="ThoughtSpot">
+      <svg viewBox="0 0 48 48" width="21" height="21" fill="currentColor" aria-hidden="true">
+        <path d="M47.7108 0H0.289185V8.78311H47.7108V0Z"/>
+        <path d="M47.7108 11.7108H29.6927V20.4939H47.7108V11.7108Z"/>
+        <path d="M11.8012 11.7108H0.289185V20.4939H11.8012C16.1024 20.4939 19.6084 23.9999 19.6084 28.3011V47.4216H28.3915V28.3011C28.3915 19.1566 20.9458 11.7108 11.8012 11.7108Z"/>
+        <path d="M38.7108 33.253C34.6446 33.253 31.3373 36.5603 31.3373 40.6265C31.3373 44.6928 34.6446 48 38.7108 48C42.7771 48 46.0843 44.6928 46.0843 40.6265C46.0843 36.5603 42.7771 33.253 38.7108 33.253Z"/>
+      </svg>
+    </span>
+  </header>
   <div class="block">
 
     <div class="pghd" id="authHd"><h1 class="pgtitle"><span class="ticon"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a13.5 13.5 0 0 0 0 18a13.5 13.5 0 0 0 0-18"/></svg></span><span>Cluster details</span></h1>
@@ -1452,12 +1466,12 @@ textarea.block:focus{border-color:var(--accent)}
     <div id="authStage1">
       <label class="field">
         <span class="lbl">Cluster URL</span>
-        <input id="fCluster" type="text" placeholder="acme.thoughtspot.cloud" spellcheck="false" autocomplete="off">
+        <input id="fCluster" type="text" placeholder="yourcompany.thoughtspot.cloud" spellcheck="false" autocomplete="off">
         <span class="frule" data-for="fCluster"></span>
       </label>
       <label class="field">
         <span class="lbl">ThoughtSpot username</span>
-        <input id="fUser" type="text" placeholder="your.name" spellcheck="false" autocomplete="off">
+        <input id="fUser" type="text" placeholder="j.mehta" spellcheck="false" autocomplete="off">
         <span class="frule" data-for="fUser"></span>
       </label>
       <label class="field">
@@ -1479,10 +1493,10 @@ textarea.block:focus{border-color:var(--accent)}
           <span class="lbl">Cluster URL</span>
           <span class="tlink" id="btnBackAuth">change credentials</span>
         </div>
-        <div class="cval" id="cardCluster">acme.thoughtspot.cloud</div>
+        <div class="cval" id="cardCluster">northwind.thoughtspot.cloud</div>
         <div class="cfield">
           <span class="lbl" style="display:block;margin-bottom:6px">ThoughtSpot username</span>
-          <div class="cval" id="cardUser">your.name</div>
+          <div class="cval" id="cardUser">j.mehta</div>
         </div>
         <div class="cfield">
           <span class="lbl" style="display:block;margin-bottom:6px">Password</span>
@@ -1708,7 +1722,8 @@ textarea.block:focus{border-color:var(--accent)}
         <div class="inner noleft">
           <div class="barslot"></div>
           <span class="mono dim" id="mCount"><span id="mCountTxt"></span><span class="cpd" id="mCopied"></span></span>
-          <div class="barslot right"><button class="btn btn-primary" id="mPush">Add to model</button></div>
+          <div class="barslot right"><span class="cbusy mono acc" id="pushBusy"
+            aria-live="polite"></span><button class="btn btn-primary" id="mPush">Add to model</button></div>
         </div>
       </div>
     </aside>
@@ -2014,7 +2029,7 @@ const PASTRUNS=[
 /* ============================== STATE ============================== */
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const nf=n=>n.toLocaleString('en-US');
-const st={cluster:'acme.thoughtspot.cloud',pass:'',user:'',win:30,
+const st={cluster:'northwind.thoughtspot.cloud',pass:'',user:'j.mehta',win:30,
   selC:new Set(),selM:new Set(),connQ:'',stage:'conn',tab:'scope',
   /* The query history the run reads: one CSV, given rather than fetched. */
   org:'primary',orgQ:'',
@@ -2289,9 +2304,9 @@ function restartFlow(msg){
   dropHeader();
   loadThen(msg||'Gathering details',1500,()=>fade('#viewScope'));
 }
-function dropHeader(){
+function dropHeader(sel){
   if(REDUCED.matches)return;
-  const h=$('#app > .hdr'); if(!h)return;
+  const h=$(sel||'#app > .hdr'); if(!h)return;
   h.classList.remove('hdrdrop'); void h.offsetWidth; h.classList.add('hdrdrop');
   const off=()=>h.classList.remove('hdrdrop');
   h.addEventListener('animationend',off,{once:true});
@@ -2358,7 +2373,7 @@ function credBusy(id,msg,...btns){
   btns.forEach(b=>{const n=$(b); if(n)n.style.display=on?'none':'';});
 }
 $('#btnConnect').onclick=()=>{
-  const c=$('#fCluster').value.trim()||'acme.thoughtspot.cloud';
+  const c=$('#fCluster').value.trim()||'northwind.thoughtspot.cloud';
   const e=st.pendingErr; st.pendingErr=null;
   $('#authErr').style.display='none';
   credBusy('#connBusy','connecting','#btnConnect');
@@ -2378,8 +2393,9 @@ function setConn(cluster,pass,user){
   st.pass=pass;
   if(user!==undefined)st.user=user||st.user;
   $('#cardCluster').textContent=st.cluster;
-  $('#cardUser').textContent=st.user||'your.name';
-  $('#cardPass').textContent='•'.repeat(20);
+  $('#cardUser').textContent=st.user||'j.mehta';
+  // as long as what was typed, so the card is that password and not a stand-in
+  $('#cardPass').textContent='•'.repeat(Math.min(28,Math.max(8,(st.pass||'').length||20)));
   $('#cardEye').classList.remove('on');
   $('#cardPass').classList.remove('shown');
 }
@@ -2454,6 +2470,7 @@ $('#btnStart').onclick=()=>{
   go('auth');
   authView('landing',false);
   fade('#auth .block');
+  dropHeader('#auth > .hdr');
   $('#fCluster').focus();
 };
 /* the connection card lives in one place and is relocated between the auth screen
@@ -2713,7 +2730,8 @@ $('#cardEye').onclick=()=>{
   const btn=$('#cardEye'), show=!btn.classList.contains('on');
   btn.classList.toggle('on',show);
   btn.setAttribute('aria-label',show?'Hide token':'Show token');
-  $('#cardPass').textContent=show?(st.pass||''):'•'.repeat(20);
+  $('#cardPass').textContent=show?(st.pass||'')
+    :'•'.repeat(Math.min(28,Math.max(8,(st.pass||'').length||20)));
   $('#cardPass').classList.toggle('shown',show);
 };
 /* the credential fields carry the same active rule */
@@ -3492,7 +3510,9 @@ function fMaterialise(){
   st.fModel=new Set(allLogModels().map(m=>m.id));
   st.fAll=false;
 }
-function setConn(id,on){
+/* the filter tree's connection setter -- named apart from the credentials one, which
+   a plain `setConn` was quietly shadowing */
+function fSetConn(id,on){
   const ms=logModelsOf(id);
   if(on){st.fConn.add(id);ms.forEach(m=>st.fModel.add(m.id));}
   else{st.fConn.delete(id);ms.forEach(m=>st.fModel.delete(m.id));}
@@ -3724,7 +3744,7 @@ function closeFilterMenus(){
     }
     fMaterialise();
     if(b.dataset.all!==undefined&&!b.dataset.fc&&!b.dataset.fm){setAll(b.dataset.all==='1');return;}
-    if(b.dataset.fc)setConn(b.dataset.fc,connSel(b.dataset.fc)!=='all');
+    if(b.dataset.fc)fSetConn(b.dataset.fc,connSel(b.dataset.fc)!=='all');
     else if(b.dataset.fm)setModel(b.dataset.fm,!st.fModel.has(b.dataset.fm));
     fSyncAll();
   });
@@ -4004,12 +4024,11 @@ function renderPane(){
     const sel=on(); if(!sel.length)return false;
     const btn=$('#mPush');
     ackRun();
-    btn.disabled=true;
-    // the same wait the cluster's own buttons show: dots, and the word working
-    btn.innerHTML=`${DOTS('acc')}<span class="mono acc shimmer" ${SHIM()}>adding</span>`;
+    // the same wait the cluster's own buttons show: the loader stands where the
+    // button stood, and nothing is offered while it is working
+    credBusy('#pushBusy','adding','#mPush');
     setTimeout(()=>{
-      btn.textContent='Add to model';
-      btn.disabled=false;
+      credBusy('#pushBusy','','#mPush');
       m.applied=true;
       flashAdded(sel.length);
       syncBar();
@@ -4434,8 +4453,8 @@ function proto(k){
   if(k.startsWith('e-')){
     st.pendingErr=k;go('auth');
     hostCard('auth');authView('landing',false);
-    $('#fCluster').value='acme.thoughtspot.cloud';$('#fPass').value='xxxxxxxxxxxx';
-    $('#fUser').value='suraj.boro';
+    $('#fCluster').value='northwind.thoughtspot.cloud';$('#fPass').value='xxxxxxxxxxxx';
+    $('#fUser').value='j.mehta';
     $('#btnConnect').click();return;
   }
   st.viewing=null;st.sel=null;st.filter='';st.connQ='';st.runQ='';st.tab='scope';
