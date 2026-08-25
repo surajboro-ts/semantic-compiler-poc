@@ -2034,9 +2034,10 @@ const st={cluster:'northwind.thoughtspot.cloud',pass:'',user:'j.mehta',win:30,
   /* The query history the run reads: one CSV, given rather than fetched. */
   org:'primary',orgQ:'',
   qh:null,up:null,lcOpen:null,
-  /* the history each connection was last given, kept past the run it was for */
-  qhBy:{c1:{name:'sales_query_history.csv',size:'463 KB',rows:12474,kept:'14 Aug 2026'},
-        c2:{name:'mkt_queries_jul.csv',size:'208 KB',rows:5460,kept:'11 Aug 2026'}},
+  /* the history each connection was last given, kept past the run it was for. The
+     first connections start empty, so the upload itself is the first thing seen. */
+  qhBy:{c3:{name:'finance_query_history.csv',size:'391 KB',rows:10298,kept:'9 Jul 2026'},
+        c11:{name:'billing_queries_aug.csv',size:'176 KB',rows:4630,kept:'2 Aug 2026'}},
   runs:[...PASTRUNS],sel:null,filter:'',runQ:'',expanded:new Set(),grp:'month',
   /* Ways of narrowing the logs. `time` is the one question about when -- a relative
      span or two dates -- and the two id sets are the connections and models a run
