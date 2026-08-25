@@ -543,7 +543,9 @@ mark{background:rgba(113,161,244,.24);color:inherit;border-radius:2px;padding:0 
   mask-image:linear-gradient(to bottom,transparent 0,#000 34%,#000 100%);
   pointer-events:none;
 }
-.barslot{display:flex;align-items:center;min-width:0}
+/* a bar keeps its height whatever is in the slot: swapping a button for a loader
+   must not make the bar shorter under it */
+.barslot{display:flex;align-items:center;min-width:0;min-height:34px}
 /* each bar matches the content column above it, not the page: .wrap is capped at
    760px and carries 24px of side padding, so the column itself is 24px narrower
    on each side. #auth .block has no padding, so it matches its width directly. */
@@ -2829,9 +2831,11 @@ function renderBar(){
   if(st.stage==='conn'){
     const n=st.selC.size;
     bar.style.display='block';
-    // what the step is waiting for, until it is no longer waiting for it
-    info.textContent=n?'':'Select a connection';
-    info.classList.remove('strong');
+    /* what the step is waiting for, and then what it got: the connection reads back
+       by name, so the bar confirms the pick rather than going quiet. */
+    const picked=[...st.selC][0];
+    info.textContent=n&&connOf(picked)?`${connOf(picked).n} selected`:'Select a connection';
+    info.classList.toggle('strong',!!n);
     btn.textContent='Next';btn.disabled=!n;
     btn.onclick=()=>{
       /* The history is a property of the connection, not of the run: stepping into
