@@ -639,9 +639,6 @@ body {
      the page's. */
   --shadow-lift:0 0 4px 0 var(--rd-sys-color-shadow-surface-1),
                 0 -2px 4px 0 var(--rd-sys-color-shadow-surface-2);
-  /* every bottom bar stands the same height, whatever it holds: a 32px row -- the
-     Button's own height -- with a step of the scale above and below it */
-  --barh:calc(32px + 2 * var(--rd-sys-spacing-e));
   /* the 8pt steps the prototype was built on, each one a step of Radiant's own
      4pt ramp rather than a parallel scale */
   --s1:var(--rd-sys-spacing-b);  /* 8  */
@@ -1812,6 +1809,89 @@ button.rad-chip--date:hover { background: var(--rd-sys-color-chip-date-hover); }
 .rad-banner--info .rad-banner__icon { color: var(--rd-sys-color-content-brand); }
 .rad-banner__body { flex: 1 1 auto; color: var(--rd-sys-color-content-primary); }
 .rad-banner .rad-iconbtn { flex: none; align-self: center; }
+/* The dismiss is drawn in Content/Primary, not the ghost button's muted
+   secondary -- it reads at the weight of the message it closes. */
+.rad-banner .rad-iconbtn--ghost { color: var(--rd-sys-color-content-primary); }
+.rad-banner .rad-iconbtn--ghost:active,
+.rad-banner .rad-iconbtn--ghost[data-force-state='activated'] { color: var(--rd-sys-color-content-brand); }
+
+/* ----- src/radiant/components/ExplainerCard/ExplainerCard.css ----- */
+/**
+ * Radiant — Explainer card (Figma "Explainer card" 18310:23047).
+ *
+ *   Card      — 340px fixed, padding 20 (E), gap 12 (C), radius 6, bg Raised,
+ *               Elevation/Menu.
+ *   Titled    — column: [title · dismiss] / body / media / actions.
+ *   Compact   — row: [body · dismiss]. No title, media or actions; this is the
+ *               hover form, so it usually has no dismiss either.
+ *   Media     — Gray/10A, radius 6, full content width. Empty it holds the
+ *               spec's 170px placeholder; with content it sizes to it.
+ *   Actions   — right-aligned, gap 16 (D); small Tertiary + small Primary.
+ */
+.rad-explainer {
+  box-sizing: border-box;
+  display: flex;
+  gap: var(--rd-sys-spacing-c); /* 12px */
+  align-items: flex-start;
+  width: 340px;
+  min-width: 340px;
+  max-width: 340px;
+  padding: var(--rd-sys-spacing-e); /* 20px */
+  background: var(--rd-sys-color-bg-raised);
+  border-radius: var(--rd-sys-radius-6);
+  box-shadow: var(--rd-sys-elevation-menu);
+}
+.rad-explainer--titled { flex-direction: column; }
+
+/* Title row — the title takes the width the dismiss button leaves. */
+.rad-explainer__head {
+  display: flex;
+  align-items: center;
+  gap: var(--rd-sys-spacing-c);
+  width: 100%;
+}
+.rad-explainer__title {
+  flex: 1 1 0;
+  min-width: 0;
+  color: var(--rd-sys-color-content-primary);
+}
+
+.rad-explainer__body { color: var(--rd-sys-color-content-primary); }
+.rad-explainer--titled .rad-explainer__body { width: 100%; }
+/* Compact: body beside the dismiss — 264px at the spec's 340 card. */
+.rad-explainer--compact .rad-explainer__body { flex: 1 1 auto; min-width: 0; }
+/* Opt-in line cap (maxLines); -webkit-line-clamp is the cross-browser spelling. */
+.rad-explainer__body[data-clamp] {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rad-explainer__media {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--rad-gray-10a); /* Figma Color/Gray/10A — no semantic alias for it */
+  border-radius: var(--rd-sys-radius-6);
+  overflow: hidden;
+}
+.rad-explainer__media:empty { height: 170px; } /* the spec's placeholder block */
+
+.rad-explainer__actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: var(--rd-sys-spacing-d); /* 16px */
+  width: 100%;
+}
+
+/* The dismiss never shrinks; in the compact form it sits against the first body line. */
+.rad-explainer > .rad-iconbtn,
+.rad-explainer__head .rad-iconbtn { flex: none; }
+/* Drawn in Content/Primary, not the ghost button's muted secondary — the spec
+   gives the card's dismiss the same weight as its title. Activate still goes brand. */
+.rad-explainer .rad-iconbtn--ghost { color: var(--rd-sys-color-content-primary); }
+.rad-explainer .rad-iconbtn--ghost:active,
+.rad-explainer .rad-iconbtn--ghost[data-force-state='activated'] { color: var(--rd-sys-color-content-brand); }
 
 /* ----- src/radiant/components/Tooltip/Tooltip.css ----- */
 /** Radiant — Tooltip (Figma 246:11127): dark inverse bubble, white caption text. */
@@ -2059,9 +2139,10 @@ mark{background:color-mix(in srgb,var(--rd-sys-color-content-brand) 24%,transpar
    the upload under it, so the list keeps its height instead of being squeezed */
 /* the step itself never scrolls: the list is the only scroller, up to twelve models
    at a time, and the upload keeps a fixed height under it */
-/* clear of the bar standing on the bottom edge, and a step of the scale between */
+/* nothing stands on the bottom edge any more, so the step keeps only its own
+   breathing room under the upload block */
 #stModel{overflow:hidden;
-  padding-bottom:calc(var(--barh) + var(--s4));
+  padding-bottom:var(--s4);
   /* the lists inside bleed their hover surface into the gutter either side, and the
      step clips its overflow -- so it carries that room on both sides rather than
      cutting the fill off at the content column's right edge */
@@ -2148,6 +2229,25 @@ mark{background:color-mix(in srgb,var(--rd-sys-color-content-brand) 24%,transpar
   position:sticky;top:0;background:var(--page);z-index:30;
 }
 .hdr > .seg{position:absolute;left:50%;transform:translateX(-50%)}
+/* The page's progress rides the top bar's bottom edge, the full width of the page
+   rather than the content column. Radiant's wizard footer bar straightened out:
+   4px, a 6px gap at the middle, 2px ends, border-subtle waiting and bg-brand done.
+   The run's band shares the rail -- it has no progress to report, so instead of
+   filling it stretches out of one end and gathers into the other. */
+.hprog{position:absolute;left:0;right:0;bottom:-2px;height:4px;
+  pointer-events:none;display:none;overflow:hidden}
+.hprog.on{display:block}
+.hseg,.hsnake{position:absolute;top:0;height:4px;border-radius:2px}
+.hseg{background:var(--rd-sys-color-border-subtle);transition:background .3s ease}
+.hseg.is-filled{background:var(--rd-sys-color-bg-brand)}
+#hSegA{left:0;width:calc(50% - 3px)}
+#hSegB{right:0;width:calc(50% - 3px)}
+/* laid out full-width and driven only by transform, so the band's two ends can
+   move in turn without either being animated on a layout property */
+.hsnake{left:0;right:0;display:none;transform-origin:left center;
+  background:var(--rd-sys-color-bg-brand)}
+.hprog.run .hsnake{display:block}
+.hprog.run .hseg{display:none}
 /* the mark holds the left end of the bar; the switcher is centred on the page, so
    the mark takes the space rather than pushing anything */
 .brand{display:flex;align-items:center;margin-right:auto;color:var(--text)}
@@ -2155,9 +2255,6 @@ mark{background:color-mix(in srgb,var(--rd-sys-color-content-brand) 24%,transpar
 /* The cluster is context, not a control: Radiant's read-only Chip, set in the mono
    face every other identifier in the portal uses. */
 .ctxwrap{position:relative}
-.clusterchip{font-family:var(--rd-sys-font-family-mono);
-  font-size:var(--rd-sys-type-caption-size);letter-spacing:.02em;
-  padding:2px var(--rd-sys-spacing-b);color:var(--rd-sys-color-content-secondary)}
 /* The organisation card is a Radiant Menu hung off the trigger chip that names the
    organisation. Where it opens and how wide it is are the page's. */
 .ctxpop{position:absolute;left:0;top:calc(100% + 6px);width:340px;z-index:40;display:none}
@@ -2172,8 +2269,13 @@ mark{background:color-mix(in srgb,var(--rd-sys-color-content-brand) 24%,transpar
    sentence, and the sentence is where you change it. The chip anchors the menu, so
    the caption that holds it is the positioned box. */
 .orgpick{position:relative;display:inline-flex;vertical-align:baseline;margin:0 2px}
+/* Radiant's Select is a form control sized to its column; here it stands in a
+   sentence, so the one thing overridden is that width. The open state is the
+   Field's own active border, reached through the class the picker already sets. */
+.orgpick .rad-select__trigger{width:auto;cursor:pointer;text-align:left}
+.orgpick .rad-select__trigger.is-active{border-color:var(--rd-sys-color-border-brand)}
 .orgpick .pchev{display:inline-flex;transition:transform .2s cubic-bezier(.32,.72,0,1)}
-.orgpick .rad-trigger.is-active .pchev{transform:rotate(180deg)}
+.orgpick .rad-select__trigger.is-active .pchev{transform:rotate(180deg)}
 /* view switcher, now in page content */
 /* The view switcher is Radiant's SegmentedControl; only where it sits is ours.
    An inactive segment reads back a step, so the active one is the one that says
@@ -2203,15 +2305,39 @@ mark{background:color-mix(in srgb,var(--rd-sys-color-content-brand) 24%,transpar
    title, so it sits closer to it than the header's own right-hand controls do */
 /* The caption continues the title's sentence, so it sits closer to it than the
    header's own column gap -- pulled back to a word space at the caption's size. */
-.pgsub{margin:0 auto 0 calc(-1 * var(--s2));color:var(--text-dim);
+/* The caption holds one line and keeps 48px clear of the step's actions -- 36px
+   of its own plus the header's 12px column gap. The actions stay pinned right by
+   their own auto margin, so the clearance is a floor, not a fixed distance.
+   It is laid out as a flex line rather than as running text so the one part that
+   can run long -- the org name -- is the part that gives when the line is short of
+   room. The 4px gap stands in for the word spaces flex would otherwise collapse. */
+.pgsub{display:flex;align-items:baseline;gap:4px;white-space:nowrap;
+  margin:0 36px 0 calc(-1 * var(--s2));color:var(--text-dim);
   font-size:var(--rd-sys-type-body-size);flex:0 1 auto;min-width:0}
+/* the pill takes what the line has left and ellipses, rather than pushing "org"
+   into the clearance or breaking the header onto a second row */
+.pgsub .orgpick{min-width:0;flex:0 1 auto}
+.pgsub .rad-select__trigger{min-width:0;max-width:100%}
+.pgsub .rad-select__value{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .pgsub .on{color:var(--text)}
+/* the models tally is the caption's subject, not framing round it, so once it has
+   something to count it reads at full strength -- an empty tally stays quiet */
+#modelCount{color:var(--text-dim)}
+#modelCount.strong{color:var(--text)}
 /* One ground line through the whole header, whatever the size: the caption shares
    the title's baseline, and the chip in it shares the caption's -- an inline-flex
    takes its baseline from its first item, so the chip's own label sits on the line
    and the pill stands on it rather than floating beside it. */
 .pghd{align-items:baseline}
-.pghd .right{align-self:flex-end}
+/* The actions stand on the header's own ground line, the one the title, the
+   caption and the pill in it all share -- so the CTA and the org pill read as
+   sitting on the same floor rather than as two boxes centred on nothing. */
+.pghd .right{align-self:baseline}
+/* .sall is a clipping window holding an absolutely positioned child, so it has no
+   in-flow text and a clipped box hands the header its bottom edge as a baseline
+   instead. The window is 34px and the button's label sits 22px down inside it, so
+   it is sunk by the 12px between the two and the CTA lands on the same line. */
+.pghd .right .sall{top:12px}
 .group{margin-top:var(--s4)}
 /* the first group follows the global select-all row at the same distance the
    connections list does, so both steps start their list at the same rhythm */
@@ -2269,44 +2395,6 @@ mark{background:color-mix(in srgb,var(--rd-sys-color-content-brand) 24%,transpar
 .ddbtn{width:auto;background:transparent}
 .dd.open .ddbtn{border-color:var(--rd-sys-color-border-brand)}
 #winLabel{color:var(--text)}
-
-/* floating bar: sits above the page rather than closing it off with a rule */
-.actionbar{position:fixed;left:0;right:0;bottom:0;display:none;z-index:15;pointer-events:none}
-/* The step's progress, run round the bar's own outline instead of sitting inside
-   it: Radiant's wizard footer bar -- 4px, 6px gap, 2px-rounded, border-subtle
-   waiting and bg-brand done -- bent up the left side, across the top and down the
-   right. The bottom edge carries nothing; it is the screen's. */
-.wiz{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;
-  overflow:visible}
-.wseg{fill:none;stroke:var(--rd-sys-color-border-subtle);stroke-width:4;
-  stroke-linecap:round;transition:stroke .3s ease}
-.wseg.is-filled{stroke:var(--rd-sys-color-bg-brand)}
-/* a bar keeps its height whatever is in the slot, so the slot stands as tall as
-   the Button it holds */
-.barslot{display:flex;align-items:center;min-width:0;min-height:32px}
-/* each bar matches the content column above it, not the page: .wrap is capped at
-   760px and carries 24px of side padding, so the column itself is 24px narrower
-   on each side. */
-#bar .inner{width:calc(min(760px, 100% - 2*var(--s3)) - 2*var(--s3))}
-/* the left slot is kept, empty, when there is no Back button, so the counter stays
-   centred on the bar itself rather than on the space left over beside a button */
-.actionbar .inner.noleft > .barslot:first-child{visibility:hidden}
-.barslot.right{justify-content:flex-end;gap:var(--s2)}
-#barInfo{text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* a live count is the bar's subject, so it reads at full strength; the prompt to
-   choose something is still secondary */
-#barInfo.strong{color:var(--text)}
-.actionbar .inner{
-  margin:0 auto;pointer-events:auto;position:relative;
-  background:var(--page-glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  /* it comes up out of the screen's own edge: the bottom corners stay square and
-     the bottom border goes, so the bar reads as continuous with the edge it sits on */
-  border:none;min-height:var(--barh);
-  border-radius:var(--rd-sys-radius-12) var(--rd-sys-radius-12) 0 0;
-  box-shadow:var(--shadow-lift);
-  padding:var(--rd-sys-spacing-e) var(--s2);
-  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:var(--s2);
-}
 
 /* dropdown */
 .dd{position:relative}
@@ -2423,72 +2511,15 @@ mark{background:color-mix(in srgb,var(--rd-sys-color-content-brand) 24%,transpar
    detail panel takes width from its right, sliding the content left */
 #viewRun{flex:1;min-height:0}
 .runmain{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
-/* while a run is in flight the column carries its own bar: how far along it is on
-   the left, and what to do about it on the right */
-/* two ends, each as wide as it needs: the shared bar's equal side columns are too
-   narrow for a sentence */
-#runBar .inner{width:calc(min(760px, 100%) - 2*var(--s3));
-  display:flex;justify-content:space-between;align-items:center;gap:var(--s3);
-  padding:var(--rd-sys-spacing-e) var(--s3);min-height:var(--barh)}
-/* A short run of squares crawling round the bar's own outline -- stroked on the
-   path itself, so it turns the corners instead of dropping out at them. The dash
-   and the gap are the same length as the stroke is wide, which is what makes each
-   mark an exact square. */
-#runBar .inner{position:relative}
-/* dismissing it is a departure, not a disappearance */
-@keyframes barOut{from{transform:none;opacity:1}to{transform:translateY(130%);opacity:0}}
-#runBar.out{animation:barOut .22s cubic-bezier(.4,0,.8,.4) both;pointer-events:none}
-/* the hairline steps aside only while the worm is running: once the run is done the
-   bar looks like every other floating bar */
-#runBar.loading .inner{border-color:transparent}
-.snake{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;
-  overflow:visible}
-/* The same indicator the wizard's steps draw, on the same outline: a 4px band
-   round the top of the bar, the brand travelling over a subtle track. Where the
-   wizard measures progress, this one has none to report -- so the band stretches
-   out of one end and gathers into the other, over and over. */
-#snakeRect,.strack{fill:none;stroke-linecap:round}
-#snakeRect{stroke:var(--rd-sys-color-bg-brand)}
-.strack{stroke:var(--rd-sys-color-border-subtle)}
-/* wide enough for the longest figure it will hold, so the percentage climbing does
-   not nudge the rest of the bar */
 /* the fold wrapper carries the search row's trailing padding, which would hold the
    button 16px shy of the content's right edge */
 #newRunWrap .sallin{padding-right:0}
 /* the fold clips whatever is inside it, so it has to be as tall as the button --
    28px shaved the button's rounded top and bottom off */
 #newRunWrap{height:34px}
-/* A drawer pulled out from behind the run bar, taking the bar's own width and
-   sitting exactly over it. The clip box never animates; only the panel inside
-   slides, which is what makes it read as coming out from underneath. */
-.draw{position:absolute;left:50%;transform:translateX(-50%);
-  bottom:calc(100% - 14px);overflow:hidden;pointer-events:none}
-/* the switch reads first and the sentence sits beside it, rather than the two
-   being thrown to opposite ends of the drawer */
-.draw .drawin{
-  background:var(--raised);border:1px solid var(--hairline);border-bottom:none;
-  border-radius:var(--rd-sys-radius-8) var(--rd-sys-radius-8) 0 0;padding:12px var(--s3) 30px;
-  display:flex;align-items:center;justify-content:space-between;gap:var(--s3);
-  transform:translateY(101%);opacity:0;
-  transition:transform .46s cubic-bezier(.36,0,.15,1),opacity .3s ease .12s}
-.draw.on{pointer-events:auto}
-.draw.on .drawin{transform:none;opacity:1;
-  transition:transform .56s cubic-bezier(.2,.9,.2,1),opacity .22s ease}
-/* the run's own drawer only reports what was already asked for */
-/* an outline until it is on, then filled -- the same restraint as the checkboxes */
-
-#runPct{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;min-width:104px}
-/* what the bar has to say reads at full strength either way */
-#runWait{white-space:nowrap;color:var(--text)}
-/* No gap on the row itself: a flex gap applies around a zero-width item too, which
-   would leave a hole on the right while there is no dismiss to show. The space
-   belongs to the button's own wrapper, so it arrives with it and the status slides
-   across as it unfolds. */
-.barend{display:inline-flex;align-items:center}
 .xwrap{flex:0 0 auto;overflow:hidden;display:flex}
 .xin{display:flex;align-items:center;padding-left:var(--s2)}
 
-.snake.off{display:none}
 .runmain > .wrap{flex:1;min-height:0;display:flex;flex-direction:column;width:100%;
   box-sizing:border-box;padding-bottom:0}
 #runList{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;margin:0 calc(-1 * var(--rd-sys-spacing-d));padding:0 var(--rd-sys-spacing-d) var(--s5)}
@@ -2506,7 +2537,7 @@ mark{background:color-mix(in srgb,var(--rd-sys-color-content-brand) 24%,transpar
 /* Moving between models, closing the panel, dismissing the run bar: these are the
    page's own controls rather than something offered in passing, so they read at
    Content/Primary instead of the ghost IconButton's Secondary. */
-.navb,.panelclose,.xbtn{color:var(--rd-sys-color-content-primary)}
+.navb,.panelclose{color:var(--rd-sys-color-content-primary)}
 .navb .rad-icon{transition:transform .18s}
 .navb:not(:disabled):hover .rad-icon{transform:translateX(-2px)}
 .navb.next:not(:disabled):hover .rad-icon{transform:translateX(2px)}
@@ -2516,6 +2547,23 @@ mark{background:color-mix(in srgb,var(--rd-sys-color-content-brand) 24%,transpar
 .pane > .inner{flex:1;min-height:0;overflow-y:auto;scrollbar-gutter:stable;
   padding-bottom:104px}
 .panelclose{position:absolute;top:var(--s4);right:var(--s4);z-index:5}
+/* The panel's progress, on its own top edge: the page rail's band, scoped to the
+   one model being written into rather than to the run. */
+.pprog{position:absolute;left:0;right:0;top:0;height:4px;z-index:6;
+  overflow:hidden;pointer-events:none;display:none}
+.pprog.on{display:block}
+.psnake{position:absolute;left:0;right:0;top:0;height:4px;border-radius:2px;
+  transform-origin:left center;background:var(--rd-sys-color-bg-brand)}
+/* What the model got: under the model's name, ahead of the instructions it is
+   reporting on. It holds until it is closed. */
+.panenote{display:none;flex:0 0 auto;margin:var(--s3) 0 0}
+/* standing down while the write is in flight, at the system's disabled strength.
+   It switches rather than fades: a control going unavailable is a state, and the
+   band on the top edge is what carries the motion. */
+.pane.writing .mlist,
+.pane.writing #mAllWrap{opacity:.4}
+.panenote.on{display:flex}
+.panenote .rad-banner__body{flex:1 1 auto}
 .detail{position:relative}
 /* A row that is still working: dim text with a highlight travelling through it.
    Both ends come from the --shim-* pair above, which each theme names for itself. */
@@ -2708,27 +2756,52 @@ textarea.block:focus{border-color:var(--accent)}
 .notice .rad-banner__body br{content:'';display:block;margin-bottom:6px}
 .notice .rad-banner__icon{margin-top:2px}
 
+/* The run's own notice, between the way back and the title. It appears when the
+   run does and holds through the result, exactly as the floating bar did; what
+   changed is that only its cross takes it away. Leaving is still a departure
+   rather than a disappearance -- away from the page, which is upward here. */
+.runnote{display:none;margin:0 0 var(--s3)}
+.runnote.on{display:flex}
+@keyframes noteOut{from{transform:none;opacity:1}to{transform:translateY(-8px);opacity:0}}
+.runnote.out{animation:noteOut .22s cubic-bezier(.4,0,.8,.4) both;pointer-events:none}
+/* the message takes the width, so the dismiss sits against the right edge */
+.runnote .rad-banner__body{flex:1 1 auto}
+
 /* ---- instructions panel: one card per instruction, each independently selectable ---- */
-/* the panel carries its own floating bar, scoped to the panel rather than the page */
-.panelbar{position:absolute;left:0;right:0;bottom:0;display:none;z-index:15;
-  pointer-events:none}
-.panelbar.on{display:block}
-#metBar .inner{width:calc(100% - 2*var(--s4))}
-#mCount{text-align:center;white-space:nowrap}
+/* The tally reads as ordinary copy beside the link, not as a bar's readout, so it
+   is set in Geist rather than the mono face the floating bar used. Tabular figures
+   keep it from twitching as the count climbs. */
+#mCount{white-space:nowrap;color:var(--text-dim);
+  font-size:var(--rd-sys-type-body-size);line-height:var(--rd-sys-type-body-line);
+  font-variant-numeric:tabular-nums}
 #mCount.strong{color:var(--text)}
 /* Confirmation lives in the counter itself: the line grows to admit the longer
    word, holds, then settles back. Only the max-width animates, so the counter stays
    centred on the bar the whole way through -- the same motion the copy note uses
    beside it. */
-.cnt{display:inline-block;overflow:hidden;white-space:nowrap;vertical-align:bottom;
-  transition:width .46s cubic-bezier(.32,.72,0,1)}
+/* the fold clips; the word inside keeps its own width so it never reflows as the
+   wrapper travels */
+.cnt{display:inline-block;overflow:hidden;white-space:nowrap;vertical-align:bottom}
+.cntin{display:inline-block;white-space:nowrap}
 .cpd{display:inline-block;overflow:hidden;white-space:nowrap;vertical-align:bottom;
   transition:max-width .46s cubic-bezier(.32,.72,0,1),opacity .3s ease}
 .cpd{max-width:0;opacity:0}
 .cpd.on{opacity:1}
 
-/* the select-all sits above the list, in the same place as on the scope steps */
+/* The panel's controls row: the bulk-select link, the divider the lists use
+   between that link and what follows it, the tally, and the action that writes the
+   instructions in -- 8px either side of the rule, as in the scope steps. */
+/* No gap on the row: the spacing is the fold's own, exactly as in the scope
+   steps -- 8px between the link and the rule, 8px after it -- so the pairing is
+   the same one the lists use rather than a lookalike. */
 .mhd{display:flex;align-items:center;padding-bottom:6px;margin:var(--s4) 0 var(--s2)}
+.mhd .sall{height:34px}
+.mhd #mPush{margin-left:auto}
+/* Adding keeps the button where it stood and in its own colour: it is still the
+   primary action, only working -- so it takes the spinner rather than the grey a
+   disabled button would get. Nothing to press while it runs. */
+#mPush.is-busy{pointer-events:none}
+#mPush .rad-btn__icon:empty{display:none}
 .mlist{display:flex;flex-direction:column;gap:var(--s2);padding-top:2px}
 .met{background:var(--panel);border:1px solid transparent;border-radius:var(--rd-sys-radius-8);
   padding:12px var(--s3) 10px;transition:border-color .12s,opacity .18s}
@@ -2752,28 +2825,42 @@ textarea.block:focus{border-color:var(--accent)}
 .mact .vote{display:flex;align-items:center;gap:10px}
 /* a rating that has been given stays lit */
 .ic.on,.ic.on:hover{color:var(--rd-sys-color-content-brand)}
-/* Sources, the regenerate prompt and the dislike reason all open as a card over
-   the panel rather than growing the instruction they belong to, so the list keeps its
-   shape and nothing below shifts. */
+/* Sources and the dislike reason both open as a Radiant Explainer card over the
+   panel rather than growing the instruction they belong to, so the list keeps its
+   shape and nothing below shifts. .pop only places the card and fades it in --
+   the card itself brings the surface, the padding and the shadow. */
 .pop{
-  position:fixed;z-index:60;background:var(--raised);border:1px solid var(--hairline);
-  border-radius:var(--rd-sys-radius-8);box-shadow:var(--shadow-menu);padding:var(--s3);
+  position:fixed;z-index:60;
   opacity:0;transform:translateY(-4px);
   transition:opacity .14s,transform .18s cubic-bezier(.32,.72,0,1);
 }
 .pop.in{opacity:1;transform:none}
-.pop.psrc{width:min(520px,calc(100vw - 24px))}
-.pop.pask,.pop.pdown{width:min(340px,calc(100vw - 24px))}
-.pop .ptitle{display:block;margin-bottom:var(--s2)}
-.pop .prow{display:flex;align-items:center;gap:var(--s2);margin-top:var(--s3)}
-.pop .prow .sp{flex:1}
-/* a Radiant Field, taking the card's width */
-.pop .rad-field{flex:1;min-width:0}
-.pop .ev{margin-bottom:var(--s2)}
-.pop pre{margin:0;background:var(--panel);border-radius:var(--rd-sys-radius-6);padding:10px 12px;
+/* the card is 340 wide by spec; only a viewport narrower than that overrides it */
+@media (max-width:376px){
+  .pop .rad-explainer{width:auto;min-width:0;max-width:calc(100vw - 24px)}
+}
+/* the body slot stacks when it holds controls rather than a paragraph */
+.pop .rad-explainer__body > * + *{margin-top:var(--s3)}
+/* the evidence line runs a shade over the card's 300px of content, so it is set
+   to break evenly rather than leave a word stranded on a second line */
+.pop .evline{display:block;text-wrap:balance}
+.pop .rad-field{width:100%}
+/* the SQL sits in the card's media slot, which already draws the tint and the radius.
+   The card is 340 wide by spec, so the query wraps to it rather than scrolling
+   sideways -- a line you have to drag into view is a line you do not read. It
+   breaks at spaces, and only mid-token when a single token is wider than the slot. */
+.pop .rad-explainer__media > pre{
+  margin:0;padding:10px 12px;background:none;
   font-family:var(--rd-sys-font-family-mono);font-size:var(--rd-sys-type-caption-size);line-height:1.55;
-  color:var(--text-dim);overflow-x:auto;white-space:pre}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
+  color:var(--text-dim);white-space:pre-wrap;overflow-wrap:anywhere}
+/* each line of the query is its own block with a hanging indent, so a line that
+   wraps is set in from the ones that did not -- a continuation reads as a
+   continuation rather than as the next statement */
+.pop .rad-explainer__media > pre > span{display:block;padding-left:14px;text-indent:-14px}
+/* Radiant's token carries 4px of its own side padding -- it is built to hold an
+   icon beside its label -- so the reasons need a real step between them to read
+   as separate tokens rather than one band. */
+.chips{display:flex;flex-wrap:wrap;gap:var(--rd-sys-spacing-b)}
 
 
 /* history */
@@ -2985,7 +3072,11 @@ textarea.block:focus{border-color:var(--accent)}
       <button type="button" class="rad-segmented__item is-active" data-tab="scope">New run</button>
       <button type="button" class="rad-segmented__item" data-tab="history">Run logs</button>
     </div>
-    <span class="rad-chip rad-chip--filter clusterchip" id="pillHost"></span>
+    <!-- The page's progress rides the bar's own bottom edge: the wizard's two
+         steps while a run is being set up, the run's band while it works. -->
+    <div class="hprog" id="hProg" aria-hidden="true"
+      ><span class="hseg" id="hSegA"></span><span class="hseg" id="hSegB"></span
+      ><span class="hsnake" id="hSnake"></span></div>
   </header>
 
   <div id="load" class="loadwrap">
@@ -3005,10 +3096,11 @@ textarea.block:focus{border-color:var(--accent)}
       <div id="stConn">
         <div class="pghd" data-k="conn-title">
           <h1 class="pgtitle"><span>Select connection</span></h1>
-          <span class="pgsub">from <span class="ctxwrap orgpick"><button type="button"
-            class="rad-trigger rad-trigger--filter" id="orgPick" aria-haspopup="menu"
-            ><span class="rad-trigger__label" id="orgPickLabel"></span><span
-              class="rad-trigger__chev pchev" aria-hidden="true"></span></button>
+          <span class="pgsub">in <span class="ctxwrap orgpick"><button type="button"
+            class="rad-field__box rad-select__trigger" id="orgPick"
+            aria-haspopup="listbox" aria-expanded="false"
+            ><span class="rad-select__value" id="orgPickLabel"></span><span
+              class="rad-field__icon rad-select__chev pchev" aria-hidden="true"></span></button>
             <div class="rad-menu ctxpop" id="ctxPop">
               <div class="orgblk">
                 <div class="rad-menu__search"><div class="rad-field rad-searchbar msf">
@@ -3020,7 +3112,11 @@ textarea.block:focus{border-color:var(--accent)}
                 </div></div>
                 <div class="rad-menu__list rad-menu__list--scroll" id="orgList"></div>
               </div>
-            </div></span> organisation</span>
+            </div></span> org</span>
+          <div class="right">
+            <button class="rad-btn rad-btn--basic rad-btn--primary ctanext"
+              ><span class="rad-btn__label">Next</span></button>
+          </div>
         </div>
         <div class="srow">
           <div class="rad-field rad-searchbar sf">
@@ -3037,7 +3133,16 @@ textarea.block:focus{border-color:var(--accent)}
 
       <!-- stage: models -->
       <div id="stModel" style="display:none">
-        <div class="pghd" data-k="model-title"><h1 class="pgtitle"><span>Select models</span></h1></div>
+        <div class="pghd" data-k="model-title"><h1 class="pgtitle"><span>Select models</span></h1>
+          <span class="pgsub" id="modelCount"></span>
+          <div class="right">
+            <button class="rad-btn rad-btn--basic rad-btn--secondary ctaback"
+              ><span class="rad-btn__label">Back</span></button>
+            <button class="rad-btn rad-btn--basic rad-btn--primary ctanext"
+              ><span class="rad-btn__icon ctaicon" aria-hidden="true"></span
+              ><span class="rad-btn__label">Run</span></button>
+          </div>
+        </div>
         <div class="srow">
           <div class="sall" id="modelAllWrap"><div class="sallin">
             <span class="rad-link rad-link--gray" id="modelAll">select all</span>
@@ -3082,15 +3187,6 @@ textarea.block:focus{border-color:var(--accent)}
       </div>
     </div>
 
-    <div class="actionbar" id="bar">
-      <div class="inner">
-        <svg class="wiz" id="wizSvg" aria-hidden="true"
-          ><path class="wseg" id="wizA"/><path class="wseg" id="wizB"/></svg>
-        <div class="barslot"><button class="rad-btn rad-btn--basic rad-btn--secondary" id="barBack">Back</button></div>
-        <span class="mono dim" id="barInfo"></span>
-        <div class="barslot right"><button class="rad-btn rad-btn--basic rad-btn--primary" id="barBtn">Next</button></div>
-      </div>
-    </div>
   </div>
 
   <!-- ---- run / results ---- -->
@@ -3105,6 +3201,14 @@ textarea.block:focus{border-color:var(--accent)}
           <span class="csep">/</span>
           <span class="mono ccur" id="crumbCur"></span>
         </div>
+        <!-- What the run is doing, and then what it did: Radiant's Banner, info
+             while it works and success once it lands. It stands until dismissed. -->
+        <div class="rad-banner runnote" id="runNote" role="status"
+          ><span class="rad-banner__icon" aria-hidden="true" id="runNoteIcon"></span
+          ><span class="rad-banner__body rd-body" id="runNoteMsg"></span
+          ><button type="button" class="rad-iconbtn rad-iconbtn--ghost rad-iconbtn--small"
+            id="runBarX" aria-label="Dismiss"
+            ><span class="rad-iconbtn__icon" id="runBarXIcon"></span></button></div>
         <div class="pghd">
           <h1 class="pgtitle" id="runTitle">Run results</h1>
           <span class="pgsub" id="runSub"></span>
@@ -3126,35 +3230,12 @@ textarea.block:focus{border-color:var(--accent)}
         </div>
         <div id="runList"></div>
       </div>
-      <div class="actionbar panelbar" id="runBar">
-        <div class="inner">
-          <svg class="snake" id="snakeSvg" aria-hidden="true"
-            ><path class="strack" id="snakeTrack"/><path id="snakeRect"/></svg>
-          <span class="mono" id="runWait"></span>
-          <span class="barend">
-            <span class="mono acc" id="runPct"></span>
-            <span class="xwrap" id="runXWrap"><span class="xin">
-              <button type="button" class="rad-iconbtn rad-iconbtn--ghost rad-iconbtn--xs xbtn" id="runBarX"
-                aria-label="Dismiss"><span class="rad-iconbtn__icon" id="runBarXIcon"></span></button>
-            </span></span>
-          </span>
-        </div>
-      </div>
     </div>
     <aside class="detail" id="detail">
+      <div class="pprog" id="pProg" aria-hidden="true"><span class="psnake" id="pSnake"></span></div>
       <button type="button" class="rad-iconbtn rad-iconbtn--ghost rad-iconbtn--small panelclose" id="paneClose"
         aria-label="Close"><span class="rad-iconbtn__icon" id="paneCloseIcon"></span></button>
       <div class="pane" id="pane"></div>
-      <div class="actionbar panelbar" id="metBar">
-        <div class="inner noleft">
-          <div class="barslot"></div>
-          <span class="mono dim" id="mCount"><span id="mCountRun"><span
-            id="mCountNum"></span>&nbsp;<span class="cnt" id="mCountWord"></span></span><span
-            class="cpd" id="mCopied"></span></span>
-          <div class="barslot right"><span class="cbusy mono acc" id="pushBusy"
-            aria-live="polite"></span><button class="rad-btn rad-btn--basic rad-btn--primary" id="mPush">Add to model</button></div>
-        </div>
-      </div>
     </aside>
   </div>
 
@@ -3172,7 +3253,7 @@ textarea.block:focus{border-color:var(--accent)}
         <div class="dd" id="ddTime">
           <button type="button" class="rad-field__box rad-select__trigger ddbtn"><span
             class="rad-select__value" id="timeLabel">All time</span><span
-            class="rad-select__chev car" aria-hidden="true"></span></button>
+            class="rad-field__icon rad-select__chev car" aria-hidden="true"></span></button>
           <div class="rad-menu menu tmenu">
             <div class="rad-menu__list tpres"></div>
             <hr class="rad-menu-divider trule">
@@ -3196,7 +3277,7 @@ textarea.block:focus{border-color:var(--accent)}
         <div class="dd ms" id="ddScope">
           <button type="button" class="rad-field__box rad-select__trigger ddbtn"><span
             class="rad-select__value" id="fsLabel">All connections and models</span><span
-            class="rad-select__chev car" aria-hidden="true"></span></button>
+            class="rad-field__icon rad-select__chev car" aria-hidden="true"></span></button>
           <div class="rad-menu menu wide"></div>
         </div>
         <span class="fgap"></span>
@@ -3239,8 +3320,12 @@ const RAD_ICONS={
   "chevron-down":"<svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M2.927 6.85071L4.18408 5.59363L7.99999 9.40953L11.8159 5.59363L13.073 6.85071L7.99999 11.9237L2.927 6.85071Z\" fill=\"currentColor\"/> </svg>",
   "arrow-left":"<svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> <path d=\"M15.1048 8.88257L15.1048 7.10479L4.29192 7.10479L7.21263 4.18408L5.95555 2.927L1.77776 7.10479L1.77147 7.10479L1.77147 7.11108L0.882569 7.99999L5.95555 13.073L7.21263 11.8159L4.27931 8.88257L15.1048 8.88257Z\" fill=\"currentColor\"/> </svg>",
   "arrow-right":"<svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> <path d=\"M0.882568 7.1174V8.89518H11.6954L8.77474 11.8159L10.0318 13.073L14.2096 8.89518H14.2159V8.88889L15.1048 7.99999L10.0318 2.927L8.77474 4.18408L11.7081 7.1174H0.882568Z\" fill=\"currentColor\"/> </svg>",
+  "play":"<svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M5.33325 3.55554L12.4444 8.44443L5.33325 12.4444V3.55554Z\" fill=\"currentColor\"/> </svg>",
   "upload":"<svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M5.3245 8.72007L7.10228 6.94229V16.0001H8.88006V6.94229L10.6578 8.72007L11.9112 7.46673L7.99117 3.54673L4.07117 7.46673L5.3245 8.72007ZM14.2223 0.888916V4.44447H11.5556C11.5556 3.55557 10.6756 1.7778 8.00005 1.7778C5.3245 1.7778 4.4445 3.55557 4.4445 4.44447H1.77783V0.888916H14.2223Z\" fill=\"currentColor\"/> </svg>",
+  "arrow-up-right":"<svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> <path d=\"M5.33341 1.77783H14.2223V10.66673H12.4445V4.8125L3.7917 13.4653L2.5347 12.2076L11.1867 3.55561H5.33341V1.77783Z\" fill=\"currentColor\"/> </svg>",
   "expand":"<svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> <path d=\"M14.2223 1.77783V8.00005H12.4445V4.8125L4.8125 12.4445H8.00005V14.2223H1.77783V8.00005H3.55561V11.1867L11.1867 3.55561H8.00005V1.77783H14.2223Z\" fill=\"currentColor\"/> </svg>",
+  "info-circle":"<svg viewBox=\"4 4 12 12\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> <path d=\"M9.33333 9.33333H10.6667V13.3333H9.33333V9.33333Z\" fill=\"currentColor\"/> <path d=\"M9.33333 6.66667H10.6667V8H9.33333V6.66667Z\" fill=\"currentColor\"/> <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M10 16C13.3137 16 16 13.3137 16 10C16 6.68629 13.3137 4 10 4C6.68629 4 4 6.68629 4 10C4 13.3137 6.68629 16 10 16ZM10 14.6667C12.5773 14.6667 14.6667 12.5773 14.6667 10C14.6667 7.42267 12.5773 5.33333 10 5.33333C7.42267 5.33333 5.33333 7.42267 5.33333 10C5.33333 12.5773 7.42267 14.6667 10 14.6667Z\" fill=\"currentColor\"/> </svg>",
+  "checkmark-circle":"<svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M8 16C12.4183 16 16 12.4183 16 8C16 3.58172 12.4183 0 8 0C3.58172 0 0 3.58172 0 8C0 12.4183 3.58172 16 8 16ZM7.29521 11.4793L12.8126 5.96187L11.5556 4.70479L7.29521 8.96514L5.25708 6.92702L4 8.18409L7.29521 11.4793Z\" fill=\"currentColor\"/> </svg>",
   "exclamation-point-circle":"<svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M8 0C12.4183 0 16 3.58172 16 8C16 12.4183 12.4183 16 8 16C3.58172 16 0 12.4183 0 8C0 3.58172 3.58172 0 8 0ZM8 11C7.44772 11 7 11.4477 7 12C7 12.5523 7.44772 13 8 13C8.55229 13 9 12.5523 9 12C9 11.4477 8.55229 11 8 11ZM9.58826 3.48169H6.50134L7 10H9L9.58826 3.48169Z\" fill=\"currentColor\"/> </svg>",
   "thumb-up-undo":"<svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M0.888931 6.22225H3.5556V14.2223H0.888931V6.22225ZM13.3245 5.33336C13.5746 5.3331 13.822 5.38561 14.0504 5.48748C14.2788 5.58934 14.4832 5.73826 14.6502 5.92451C14.8171 6.11076 14.9429 6.33013 15.0193 6.56831C15.0956 6.80648 15.1209 7.0581 15.0934 7.3067L14.5067 12.64C14.4585 13.0753 14.2514 13.4775 13.9249 13.7695C13.5985 14.0615 13.1758 14.2227 12.7378 14.2223H4.44449V6.23114L6.37338 4.72892L8.24004 1.72448C8.40017 1.46828 8.62294 1.25711 8.88734 1.11091C9.15174 0.964718 9.44903 0.888315 9.75115 0.88892H9.9556C10.8445 0.88892 11.5556 1.60003 11.5556 2.48892V5.33336H13.3245Z\" fill=\"currentColor\"/> </svg>",
   "thumb-down-undo":"<svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M15.1041 10.6666H12.4375V2.66663H15.1041V10.6666ZM2.66856 12.4444C2.41844 12.4447 2.17108 12.3922 1.94264 12.2903C1.7142 12.1884 1.50983 12.0395 1.34288 11.8533C1.17593 11.667 1.05016 11.4476 0.973788 11.2095C0.897416 10.9713 0.872161 10.7197 0.899674 10.4711L1.48634 4.24885C1.53452 3.81354 1.74168 3.41134 2.06811 3.11936C2.39454 2.82737 2.81727 2.66616 3.25523 2.66663H11.5486V10.6577L9.61967 12.16L7.75301 15.1644C7.59288 15.4206 7.37011 15.6318 7.10571 15.778C6.84131 15.9242 6.54402 16.0006 6.2419 16H6.03745C5.14856 16 4.43745 15.2888 4.43745 14.4V12.4444H2.66856Z\" fill=\"currentColor\"/> </svg>",
@@ -3277,6 +3362,24 @@ const TOGGLE=(on,attrs='')=>`<span class="rad-toggle" ${attrs}
   ><input type="checkbox" class="rad-toggle__input" tabindex="-1" role="switch"
     aria-checked="${on?'true':'false'}"${on?' checked':''}
   ><span class="rad-toggle__track"></span><span class="rad-toggle__thumb"></span></span>`;
+/* ----- src/radiant/components/ExplainerCard/ExplainerCard.tsx ----- */
+/* Explainer card. Titled: [title . dismiss] / body / media / actions.
+   Compact (no title): [body . dismiss] -- the hover form, which the spec leaves
+   without a dismiss. `media` is the tinted slot; left empty it draws the spec's
+   170px placeholder block. */
+const EXCARD=({title=null,body=null,media=null,actions=null,dismiss=true,cls=''})=>{
+  const x=dismiss?`<button type="button" class="rad-iconbtn rad-iconbtn--ghost rad-iconbtn--small"
+      data-ex-x aria-label="Dismiss"><span class="rad-iconbtn__icon">${RIC('cross',16)}</span></button>`:'';
+  const b=body==null?'':`<div class="rad-explainer__body rd-body">${body}</div>`;
+  return title==null
+    ? `<div class="rad-explainer rad-explainer--compact${cls?' '+cls:''}" role="dialog">${b}${x}</div>`
+    : `<div class="rad-explainer rad-explainer--titled${cls?' '+cls:''}" role="dialog"
+        ><div class="rad-explainer__head"
+          ><div class="rad-explainer__title rd-label-section">${title}</div>${x}</div>${b}${
+        media==null?'':`<div class="rad-explainer__media">${media}</div>`}${
+        actions==null?'':`<div class="rad-explainer__actions">${actions}</div>`}</div>`;
+};
+
 /* `indeterminate` is a property, never an attribute -- the same useEffect
    Checkbox.tsx runs, over whatever has just been written into the document. */
 const radSync=(root=document)=>root.querySelectorAll('.rad-check__input').forEach(
@@ -3650,7 +3753,7 @@ function slide(el,open){
    the space, so the field appears to expand rather than jump wider. Its width is
    always explicit, so a label change (select all -> deselect all) animates too
    instead of snapping the field's edge sideways. */
-function collapseX(el,open){
+function collapseX(el,open,fade=true){
   el=typeof el==='string'?$(el):el; if(!el)return;
   const inner=el.firstElementChild; if(!inner)return;
   const to=open?Math.ceil(inner.getBoundingClientRect().width):0;
@@ -3667,12 +3770,16 @@ function collapseX(el,open){
   const from=first?to:el.getBoundingClientRect().width;
   el.__cxTo=to;
   el.getAnimations().forEach(a=>a.cancel());
-  const land=()=>{el.style.width=to+'px';el.style.opacity=open?'':'0';};
+  const land=()=>{el.style.width=to+'px'; if(fade)el.style.opacity=open?'':'0';};
   if(REDUCED.matches||first){land();return;}
   const gen=(el.__cxGen=(el.__cxGen||0)+1);
-  el.style.opacity='';
+  if(fade)el.style.opacity='';
+  /* A fold that only changes length has nothing to fade: its content never
+     leaves, so carrying the opacity keyframes over would blink the text on every
+     change. Width alone for those; appearing and disappearing folds keep both. */
   const a=el.animate(
-    [{width:from+'px',opacity:open?0:1},{width:to+'px',opacity:open?1:0}],
+    fade?[{width:from+'px',opacity:open?0:1},{width:to+'px',opacity:open?1:0}]
+        :[{width:from+'px'},{width:to+'px'}],
     {duration:460,easing:'cubic-bezier(.32,.72,0,1)',fill:'forwards'});
   const done=()=>{
     if(el.__cxGen!==gen)return;            // superseded — leave the newer fold alone
@@ -3875,7 +3982,6 @@ function credBusy(id,msg,...btns){
 /* The header says which cluster you are on and nothing else -- a read-only token,
    not a control. Which organisation you are reading is picked where the sentence
    names it, on the Connections step. */
-function renderPill(){ $('#pillHost').textContent=st.cluster; }
 const renderOrgPick=()=>{$('#orgPickLabel').textContent=orgName(st.org);};
 $('#orgPick .pchev').innerHTML=RIC('chevron-down',16);
 function orgMatches(){
@@ -3921,7 +4027,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();});
 function go(screen){
   $$('.screen').forEach(s=>s.classList.remove('on'));
   $('#'+screen).classList.add('on');
-  if(screen==='app'){renderPill();paint();}
+  if(screen==='app')paint();
 }
 $$('.seg button').forEach(b=>b.onclick=()=>{
   const to=b.dataset.tab;
@@ -3943,8 +4049,8 @@ function paint(){
   $('#viewScope').style.display=(!busy&&setup)?'flex':'none';
   $('#viewRun').style.display=(!busy&&showRun)?'flex':'none';
   $('#viewHistory').style.display=(!busy&&st.tab==='history'&&!st.viewing)?'flex':'none';
-  $('#bar').style.display=(!busy&&setup)?'block':'none';
-  if(busy)return renderPill();
+  syncRail();
+  if(busy)return;
   softAll();
   if(setup){syncStage();renderConns();renderModels();qhSync();renderBar();}
   if(showRun){renderRail();renderPane();}
@@ -3952,7 +4058,6 @@ function paint(){
   const past=st.viewing;
   $('#runCrumb').style.display=past?'flex':'none';
   if(past)$('#crumbCur').textContent=fmtWhen(past.ts);
-  renderPill();
   radSync();
 }
 
@@ -4135,42 +4240,17 @@ $('#qDrop').addEventListener('drop',e=>{
   qhTake(f);
 });
 
-$('#barBack').onclick=()=>{st.stage='conn';st.filter='';$('#modelSearch').value='';syncClear('model');fpaint();enter('#stConn',-1);};
+$('#stModel .ctaback').onclick=()=>{st.stage='conn';st.filter='';$('#modelSearch').value='';syncClear('model');fpaint();enter('#stConn',-1);};
 
-/* The outline the progress follows: up the left, round the two top corners, down
-   the right. Open at the bottom, and inset by half the stroke so the 4px band sits
-   inside the bar rather than straddling its edge. */
-const WIZ_W=4, WIZ_GAP=6;
-/* up the left, round the two top corners, down the right -- open at the bottom,
-   inset by half the stroke so the band sits inside the bar rather than straddling
-   its edge. Both the wizard's steps and the run bar's loader are drawn on it. */
-const barPath=(w,h,t)=>{const r=Math.max(0,12-t);
-  return `M${t},${h} V${t+r} A${r},${r} 0 0 1 ${t+r},${t} H${w-t-r}`
-        +` A${r},${r} 0 0 1 ${w-t},${t+r} V${h}`;};
-function paintWizard(){
-  const inner=$('#bar .inner'), a=$('#wizA'), b=$('#wizB');
-  if(!inner||!a||!b)return;
-  /* which halves are done is set before the geometry, not after: the bar can be
-     measured at zero while a view is still fading in, and the state must not wait
-     on that */
-  a.classList.add('is-filled');                       // the step you are on is done
+/* Two segments on the header rail: the first step fills the left half, the second
+   the right, with the 6px gap between them. Straight lines need no measuring --
+   the widths are the rail's own halves, so there is nothing to repaint on resize. */
+function paintHeadProg(){
+  const prog=$('#hProg'), a=$('#hSegA'), b=$('#hSegB');
+  if(!prog||!a||!b)return;
+  a.classList.add('is-filled');
   b.classList.toggle('is-filled',st.stage==='model');
-  const w=Math.round(inner.clientWidth), h=Math.round(inner.clientHeight);
-  if(!w||!h)return;
-  if(a.__w!==w||a.__h!==h){
-    a.__w=b.__w=w; a.__h=b.__h=h;
-    const d=barPath(w,h,WIZ_W/2);
-    a.setAttribute('d',d); b.setAttribute('d',d);
-    const L=a.getTotalLength(), half=L/2-WIZ_GAP/2;
-    /* each half is one dash on the same path: the first drawn from the start, the
-       second offset past the gap */
-    a.setAttribute('stroke-dasharray',`${half} ${L}`);
-    a.setAttribute('stroke-dashoffset','0');
-    b.setAttribute('stroke-dasharray',`${half} ${L}`);
-    b.setAttribute('stroke-dashoffset',`${-(half+WIZ_GAP)}`);
-  }
 }
-addEventListener('resize',()=>{const a=$('#wizA'); if(a)a.__w=null; paintWizard();});
 
 /* What the step still needs before its CTA can do anything. Returns null once the
    step is ready, otherwise the sentence to put in front of the user. */
@@ -4197,54 +4277,46 @@ function warnStep(msg){
 }
 const clearWarn=()=>{$('#stepWarn').style.display='none';};
 
+/* The step's actions live in its own page header, beside the title, so the setup
+   steps carry nothing standing on the bottom edge. Each step owns its slot; this
+   only has to find the one on screen. */
 function renderBar(){
-  const bar=$('#bar'),info=$('#barInfo'),btn=$('#barBtn');
   const onModels=st.stage==='model';
-  $('#barBack').style.display=onModels?'':'none';
-  $('#bar .inner').classList.remove('noleft');   // both steps carry a left action now
-  paintWizard();
+  const step=$(onModels?'#stModel':'#stConn');
+  const btn=step.querySelector('.ctanext');
+  /* the Run CTA carries a leading glyph, so its wording goes in the label rather
+     than replacing everything inside the button */
+  const say=t=>{btn.querySelector('.rad-btn__label').textContent=t;};
+  paintHeadProg();
   if(!stepBlocker())clearWarn();                 // the moment it is satisfied, it goes
   if(st.stage==='conn'){
-    const n=st.selC.size;
-    bar.style.display='block';
-    /* what the step is waiting for, and then what it got: the connection reads back
-       by name, so the bar confirms the pick rather than going quiet. */
-    const picked=[...st.selC][0];
-    info.textContent=n&&connOf(picked)?`${connOf(picked).n} selected`:'Select a connection';
-    info.classList.toggle('strong',!!n);
-    btn.textContent='Next';btn.disabled=false;
+    say('Next');btn.disabled=false;
     btn.onclick=()=>{
       const why=stepBlocker(); if(why)return warnStep(why);
       clearWarn();
       /* The history is a property of the connection, not of the run: stepping into
          the models for one picks up the CSV it was last given. */
       const cid=[...st.selC][0];
-      if(!st.qh&&cid&&st.qhBy[cid])st.qh={...st.qhBy[cid]};
+      /* Replaced, not filled in: what is carried into the models step is this
+         connection's history and nothing else. Leaving the last one's in place is
+         how a CSV uploaded for one connection turned up under another. */
+      st.qh=cid&&st.qhBy[cid]?{...st.qhBy[cid]}:null;
       st.stage='model';window.scrollTo(0,0);fpaint();enter('#stModel',1);};
   }else{
-    bar.style.display='block';
+    /* the step's caption carries the tally, in the slot the connection step gives
+       to its organisation */
     const tot=MODELS.filter(m=>st.selC.has(m.c)).length;
-    /* Choosing models is optional, so an empty count is not news: the tally appears
-       once there is something in it. There is no run without history to read, so
-       until the CSV is in, the bar says what is missing rather than counting. */
+    $('#modelCount').textContent=`${st.selM.size}/${tot} selected`;
+    $('#modelCount').classList.toggle('strong',st.selM.size>0);
     if(st.up){
       /* Nothing to wait around for: the run can be handed over now and start on
-         its own when the file is up. */
-      info.textContent=st.up.queued
-        ? 'Queued, the run starts when the upload finishes'
-        : `Uploading query history, ${st.up.pct}%`;
-      info.classList.toggle('strong',st.up.queued);
-      btn.textContent=st.up.queued?'Queued':'Queue run';
+         its own when the file is up -- the upload block reports its own progress,
+         so the button is the only thing that has to say so. */
+      say(st.up.queued?'Queued':'Queue run');
       btn.disabled=st.up.queued;
       btn.onclick=()=>{if(st.up){st.up.queued=true;renderBar();}};
     }else{
-      /* One thing at a time: the models first, then the history they are read
-         against, and once both are in, what was chosen. */
-      info.textContent=!st.selM.size?'Select models'
-                      :(!st.qh?'Upload query history to run'
-                             :`${st.selM.size}/${tot} models selected`);
-      info.classList.toggle('strong',!!st.qh&&!!st.selM.size);
-      btn.textContent='Run';btn.disabled=false;
+      say('Run');btn.disabled=false;
       btn.onclick=()=>{
         const why=stepBlocker(); if(why)return warnStep(why);
         clearWarn();startRun();
@@ -4279,7 +4351,7 @@ const onScreen=r=>!!r&&r===st.viewing&&st.tab==='history'&&!st.loading;
 /* nothing reading, nothing left to generate */
 const isSettled=r=>!!r&&!r.conns.some(c=>c.state==='wait'||c.state==='reading')
                       &&!r.models.some(m=>m.state==='queued'||m.state==='gen');
-const redraw=r=>{ if(onScreen(r))flipRender(renderRail); };
+const redraw=r=>{ if(onScreen(r)){flipRender(renderRail); if(PANE_NAV)PANE_NAV();} };
 let RUN_SEQ=103;
 function newRun(){
   // every run starts with its bar to say, however the run was built
@@ -4446,38 +4518,72 @@ function startModelsFor(r,connId){
   if(!r)return;
   r.models.filter(m=>m.state==='queued'&&model(m.id).c===connId).forEach((m,i)=>beginModel(r,m,i));
 }
-/* The run bar's own indicator, drawn on the same outline as the wizard's steps.
-   Its phase is taken from the wall clock, so the re-render on each completion does
-   not restart it mid-lap. */
+/* The run's own indicator, on the same header rail the wizard's steps use. It has
+   no progress to report and it never slides: its two ends move in turn. First the
+   head runs out from the start with the tail held, then the head waits at the far
+   end while the tail catches up. Both meet at each end of the lap, so there is no
+   seam at the wrap. Its phase comes off the wall clock, so a re-render on each
+   completion does not restart it mid-lap. */
 const LAP=1900;
+/* The rail is on while a run is being set up and while one is working, and off
+   otherwise. One derived rule rather than each caller poking the class, so a band
+   that stops cannot leave the rail lit on a page that has no progress to show. */
+function syncRail(){
+  const prog=$('#hProg'); if(!prog)return;
+  prog.classList.toggle('on',!st.loading&&(st.tab==='scope'||prog.classList.contains('run')));
+}
+/* The band itself, on whichever rail it is handed: the page's while a run works,
+   the panel's while a model is being written. Phase comes off the wall clock, so
+   two rails running at once stay in step and a re-render never restarts one. */
+function bandStart(line){
+  if(!line||REDUCED.matches||line.getAnimations().length)return;
+  const E='cubic-bezier(.65,.05,.36,1)';
+  const a=line.animate([
+    {transform:'translateX(0) scaleX(0)',easing:E},
+    {transform:'translateX(0) scaleX(1)',easing:E,offset:.5},
+    {transform:'translateX(100%) scaleX(0)'}
+  ],{duration:LAP,iterations:Infinity});
+  a.currentTime=(performance.now()-T0)%LAP;       // pick up mid-lap, not from zero
+}
+const bandStop=line=>{if(line)line.getAnimations().forEach(a=>a.cancel());};
 function paintSnake(){
-  const inner=$('#runBar .inner'), line=$('#snakeRect'), track=$('#snakeTrack');
-  if(!inner||!line)return;
-  const w=Math.round(inner.clientWidth), h=Math.round(inner.clientHeight);
-  if(!w||!h)return;
-  if(line.__w!==w||line.__h!==h){                // geometry only when it changes
-    line.__w=w;line.__h=h;
-    const d=barPath(w,h,WIZ_W/2);
-    [line,track].forEach(el=>{if(!el)return;
-      el.setAttribute('d',d);el.setAttribute('stroke-width',WIZ_W);});
-    line.__P=line.getTotalLength();
-    line.getAnimations().forEach(a=>a.cancel());
+  const prog=$('#hProg'); if(!prog)return;
+  prog.classList.add('run'); syncRail();
+  bandStart($('#hSnake'));
+}
+/* The panel is writing: its own rail runs on its top edge -- for the one model
+   being written into, since a model opened while another is still writing has
+   nothing in flight of its own -- and the instructions and the bulk-select stand
+   down, because there is nothing to change about them until it lands. `inert`
+   rather than pointer-events alone: it takes the keyboard out too, so a caret
+   already sitting in an instruction cannot keep typing into it. */
+function paneWriting(on){
+  const prog=$('#pProg'), p=$('#pane');
+  if(prog){
+    prog.classList.toggle('on',!!on);
+    on?bandStart($('#pSnake')):bandStop($('#pSnake'));
   }
-  /* Separately from the geometry: a finished run cancels the animation, so a second
-     run at the same size has nothing running on it and would sit still.
-     The band has no progress to report, and it never slides: its two ends move in
-     turn. First the head runs out from the start with the tail held; then the head
-     waits at the far end while the tail catches up. Both ends meet at each end of
-     the lap, so there is nothing on screen at the wrap and the loop has no seam. */
-  if(!REDUCED.matches&&!line.getAnimations().length){
-    const L=line.__P||0, E='cubic-bezier(.65,.05,.36,1)';
-    const a=line.animate([
-      {strokeDasharray:`0 ${L}`,strokeDashoffset:'0',easing:E},
-      {strokeDasharray:`${L} ${L}`,strokeDashoffset:'0',easing:E,offset:.5},
-      {strokeDasharray:`0 ${L}`,strokeDashoffset:`${-L}`}
-    ],{duration:LAP,iterations:Infinity});
-    a.currentTime=(performance.now()-T0)%LAP;     // pick up mid-lap, not from zero
-  }
+  if(!p)return;
+  p.classList.toggle('writing',!!on);
+  [p.querySelector('.mlist'),p.querySelector('#mAllWrap')].forEach(el=>{
+    if(el)on?el.setAttribute('inert',''):el.removeAttribute('inert');
+  });
+}
+/* What the model got, and when. It holds until it is closed -- the same rule the
+   run's own banner follows. */
+function paintPaneNote(m){
+  const el=$('#paneNote'); if(!el)return;
+  const show=!!(m&&m.addedN&&!m.addedOff);
+  el.classList.toggle('on',show);
+  if(show)$('#paneNoteMsg').textContent=
+    `${m.addedN} instruction${m.addedN===1?'':'s'} added to model on ${m.addedAt}`;
+}
+/* the run has stopped: the band comes off the rail and the steps have it back */
+function stopSnake(){
+  const prog=$('#hProg');
+  bandStop($('#hSnake'));
+  if(prog)prog.classList.remove('run');
+  syncRail();
 }
 /* the run is finished once nothing is reading and nothing is left to generate */
 /* Reports whether it redrew, so the completion that triggered it does not draw the
@@ -4652,8 +4758,7 @@ function renderRail(){
   $('#runTitle').textContent=settled?'Run results':'Running…';
   /* what it has to show for itself: the models that came back with instructions */
   const withMets=r.models.filter(m=>m.state==='done').length;
-  $('#runSub').innerHTML=withMets
-    ? `for <span class="on">${withMets} model${withMets===1?'':'s'}</span>` : '';
+  /* set below, once the figure the running caption needs has been worked out */
   /* One unit per connection read and one per model generated -- the two halves of
      the work, counted together so the figure only ever moves forward. */
   const units=r.conns.length+r.models.filter(m=>m.state!=='skipped').length;
@@ -4669,23 +4774,26 @@ function renderRail(){
      work inside a result that already landed, and the row's own loader is all it
      needs. */
   const oneModel=!settled&&r.everSettled;
-  const showBar=!oneModel&&(!settled||!r.barOff||BAR_OUT);
-  $('#runBar').classList.toggle('on',showBar);
+  const pct=settled?100:(units?Math.round(done/units*100):0);
+  setTitleProgress(pct);
+  /* While the run works the figure rides the title, the way the models step's
+     tally does; once it lands the caption goes back to what the run produced. */
+  $('#runSub').innerHTML=settled
+    ? (withMets?`for <span class="on">${withMets} model${withMets===1?'':'s'}</span>`:'')
+    : `<span class="on">${pct}%</span> complete`;
+  const showBar=!oneModel&&((settled?!r.barOff:!r.noteOff)||BAR_OUT);
+  const note=$('#runNote');
+  note.classList.toggle('on',showBar);
   if(showBar){
-    const pct=settled?100:(units?Math.round(done/units*100):0);
-    $('#runPct').textContent=`${pct}% complete`;
-    setTitleProgress(pct);
-    $('#runPct').setAttribute('style',settled?'':`animation-delay:${phase(1900)}ms`);
     const anyMets=r.models.some(m=>m.state==='done');
-    $('#runWait').textContent=settled
+    note.classList.toggle('rad-banner--info',!settled);
+    note.classList.toggle('rad-banner--success',settled);
+    $('#runNoteIcon').innerHTML=RIC(settled?'checkmark-circle':'info-circle',16);
+    $('#runNoteMsg').textContent=settled
       ? (anyMets?'Connection scanned and instructions generated successfully.'
                :'Connection scanned successfully.')
       : 'This run continues in the background — you can close this page.';
-    collapseX('#runXWrap',settled);      // unfolds, pushing the status across
-    $('#runPct').classList.toggle('shimmer',!settled);
-    $('#snakeSvg').classList.toggle('off',settled);
-    $('#runBar').classList.toggle('loading',!settled);
-    if(settled)$('#snakeRect').getAnimations().forEach(a=>a.cancel());
+    if(settled)stopSnake();
     else paintSnake();
   }
   const q=st.runQ;
@@ -5197,11 +5305,22 @@ let BAR_OUT=false;
    run has finished, the first thing done with the result takes it, for good: the
    run is rebuilt each time it is opened, so the fact has to outlive the object. */
 function ackRun(){
-  const b=$('#runBar');
+  const b=$('#runNote');
   const r=curRun();
-  if(!r||!isSettled(r))return;
-  if(r.barOff&&!BAR_OUT)return;             // already acknowledged
-  r.barOff=true;st.barDone.add(r.id);
+  if(!r)return;
+  const landed=isSettled(r);
+  /* Closing the working notice closes that message and nothing else: the run
+     carries on, and when it lands it still has a result to report, so the success
+     banner is not pre-dismissed by it. Closing the result's own banner is for
+     good -- the run is rebuilt each time it is opened, so the fact has to outlive
+     the object. */
+  if(landed){
+    if(r.barOff&&!BAR_OUT)return;           // already acknowledged
+    r.barOff=true;st.barDone.add(r.id);
+  }else{
+    if(r.noteOff&&!BAR_OUT)return;
+    r.noteOff=true;
+  }
   if(!b.classList.contains('on')||REDUCED.matches){BAR_OUT=false;renderRail();return;}
   if(BAR_OUT)return;
   BAR_OUT=true;
@@ -5214,27 +5333,24 @@ function ackRun(){
   setTimeout(done,300);
 }
 $('#runBarX').onclick=ackRun;
-/* Every hand laid on a finished result acknowledges it -- one listener over the
-   whole page rather than a call inside each control, so nothing is missed. Passive
-   things never reach here: scrolling and hovering are not events. The bar itself,
-   the breadcrumb and the way on to another run are not the result. */
-['pointerdown','keydown'].forEach(ev=>$('#viewRun').addEventListener(ev,e=>{
-  const t=e.target;
-  if(t.closest('#runBar')||t.closest('#runCrumb')||t.closest('#btnNewRun'))return;
-  ackRun();
-},true));
+/* The banner stands until it is closed. Working the result no longer takes it:
+   it sits above the page rather than over it, so there is nothing for it to be in
+   the way of, and dismissing it is the user's call. Everything else about standing
+   it down is unchanged -- a run still working cannot be acknowledged, and once it
+   has been, the run remembers. */
 /* The same move as reaching for the New run tab: what is on this page carries on
    without us, and the setup page is where we land. */
 $('#btnNewRun').onclick=()=>{
   document.title=BASE_TITLE;
-  /* Another run of what is on screen: the connection is not in question, so the
-     setup opens on the models for it, with the history it was last given. */
+  /* Another run starts where every run starts, at the connection -- carrying the
+     one just looked at already picked, and the history it was last given, so
+     repeating the run is a click away without the step being skipped for you. */
   const r=st.viewing;
   const cid=r&&r.conns.length?r.conns[0].id:null;
   st.tab='scope';
+  st.stage='conn';
   if(cid){
     st.selC=new Set([cid]);st.selM=new Set();
-    st.stage='model';
     st.qh=st.qhBy[cid]?{...st.qhBy[cid]}:null;
   }
   $$('.seg button').forEach(x=>x.classList.toggle('is-active',x.dataset.tab==='scope'));
@@ -5253,6 +5369,23 @@ $('#paneClose').onclick=()=>{
 /* The models that produced instructions, in the order the list shows them -- the ones
    with nothing to read are stepped over. The ends wrap, so stepping never
    dead-ends, whether by the arrows or the arrow keys. */
+/* The panel is rendered once and then left alone -- rebuilding it would drop the
+   caret out of an instruction being edited -- so while a run is still landing
+   models, only the two nav buttons are brought up to date. Without this they keep
+   whatever they were when the panel opened, which on the first model to finish is
+   nowhere to go, and they sit disabled for the rest of the run. */
+let PANE_NAV=null;
+function syncPaneNav(){
+  const a=$('#mPrev'), b=$('#mNext');
+  if(!a||!b||!st.viewing)return;
+  const nav=navList();
+  const at=nav.findIndex(x=>x.id===st.sel);
+  const step=d=>nav.length>1&&at>=0?nav[(at+d+nav.length)%nav.length]:null;
+  [[a,step(-1)],[b,step(1)]].forEach(([btn,to])=>{
+    btn.disabled=!to;
+    btn.title=to?model(to.id).n:'';
+  });
+}
 function navList(){
   const r=st.viewing; if(!r)return [];
   return r.conns.flatMap(cc=>r.models.filter(x=>model(x.id).c===cc.id&&x.state==='done'));
@@ -5264,7 +5397,6 @@ let PUSH=null;
 const pushSelected=()=>!!PUSH&&PUSH();
 /* Copying the selection, whether asked for by the button or by the keyboard. */
 function copySelected(){
-  ackRun();                    // also reachable by the keyboard, off the page
   const r=st.viewing; if(!r)return false;
   const m=r.models.find(x=>x.id===st.sel); if(!m||!m.mets)return false;
   const sel=m.mets.filter(x=>x.on); if(!sel.length)return false;
@@ -5284,7 +5416,6 @@ document.addEventListener('keydown',e=>{
   if(copySelected())e.preventDefault();
 });
 function stepModel(d){
-  ackRun();                    // the arrow keys never land on the page itself
   const nav=navList(); if(nav.length<2)return;
   const at=nav.findIndex(x=>x.id===st.sel); if(at<0)return;
   st.sel=nav[(at+d+nav.length)%nav.length].id;
@@ -5309,7 +5440,6 @@ document.addEventListener('keydown',e=>{
 function renderPane(){
   const r=st.viewing,p=$('#pane'); if(!r)return;
   closeOver();hideCopied();
-  $('#metBar').classList.remove('on');   // only an instruction list gets the bar
   const m=r.models.find(x=>x.id===st.sel);
   const reading=!!(m&&m.state!=='queued'&&m.state!=='gen'&&m.state!=='skipped');
   $('#viewRun').classList.toggle('open',reading);
@@ -5355,6 +5485,7 @@ function renderPane(){
   const at=nav.findIndex(x=>x.id===m.id);
   const step=d=>nav.length>1&&at>=0?nav[(at+d+nav.length)%nav.length]:null;
   const prev=step(-1), next=step(1);
+  PANE_NAV=syncPaneNav;   // so a model landing mid-run can bring the two up to date
 
   p.innerHTML=`<div class="phd">
       <div class="pnav">
@@ -5368,11 +5499,24 @@ function renderPane(){
       <span class="lbl">${c.n}</span>
       <h2><a class="rad-link rad-link--medium rad-link--black rad-link--underline mlink"
         id="aOpen" title="Opens in ThoughtSpot, in a new tab">${md.n}<span
-        class="ext">${RIC('expand',13)}</span></a></h2>
-      <div class="mhd"><span class="rad-link rad-link--gray" id="mAll">select all</span></div>
+        class="ext">${RIC('arrow-up-right',13)}</span></a></h2>
+      <div class="rad-banner rad-banner--success panenote" id="paneNote" role="status"
+      ><span class="rad-banner__icon" aria-hidden="true">${RIC('checkmark-circle',16)}</span
+      ><span class="rad-banner__body rd-body" id="paneNoteMsg"></span
+      ><button type="button" class="rad-iconbtn rad-iconbtn--ghost rad-iconbtn--small"
+        id="paneNoteX" aria-label="Dismiss"
+        ><span class="rad-iconbtn__icon">${RIC('cross',14)}</span></button></div>
+      <div class="mhd"><span class="sall" id="mAllWrap"><span class="sallin"
+          ><span class="rad-link rad-link--gray" id="mAll">select all</span
+          ><span class="vr"></span></span></span
+        ><span id="mCount"><span class="cnt" id="mCountFold"><span class="cntin" id="mCountRun"
+          ><span id="mCountNum"></span>&nbsp;<span id="mCountWord"></span></span></span
+          ><span class="cpd" id="mCopied"></span></span
+        ><button class="rad-btn rad-btn--basic rad-btn--primary" id="mPush" aria-live="polite"
+          ><span class="rad-btn__icon" aria-hidden="true"></span
+          ><span class="rad-btn__label">Add to model</span></button></div>
     </div>
     <div class="pbody"><div class="mlist">${mets.map((x,i)=>metCard(x,i)).join('')}</div></div>`;
-  $('#metBar').classList.add('on');
 
   /* Toggling and rating are local: re-rendering the whole panel for them would
      drop the caret out of an instruction being edited. */
@@ -5380,20 +5524,20 @@ function renderPane(){
   function syncBar(){
     const n=on().length;
     $('#mAll').textContent=n===mets.length?'deselect all':'select all';
-    // a confirmation is still standing: leave the count saying what it confirmed
-    if(!HOLD){
-      paintCount(n,mets.length,'selected',false);
-      $('#mCount').classList.toggle('strong',n>0);
-    }
+    collapseX('#mAllWrap',true);   // after the label: the fold is measured off it
+    paintCount(n,mets.length);
+    $('#mCount').classList.toggle('strong',n>0);
     $('#mPush').disabled=n===0;
     cards().forEach((el,i)=>{
       el.classList.toggle('off',!mets[i].on);
       el.querySelector('.rad-check__input').checked=mets[i].on;
     });
   }
-  // a panel for another model starts clean, with no confirmation carried into it
-  HOLD=false;clearTimeout(CPT);
-  SYNCBAR=syncBar;                     // so a confirmation knows how to put the count back
+  /* Both are the model's own: a panel opened on one that is still writing shows
+     its band, and one that has been written shows what it got. */
+  paintPaneNote(m);
+  paneWriting(!!m.pushing);
+  $('#paneNoteX').onclick=()=>{m.addedOff=true;paintPaneNote(m);};
   syncBar();
   softEdges($('.pbody'));
 
@@ -5433,17 +5577,22 @@ function renderPane(){
      was selected stays selected, and the panel is where it was before. */
   PUSH=()=>{
     const sel=on(); if(!sel.length)return false;
-    const btn=$('#mPush');
-    ackRun();
-    // the same wait the cluster's own buttons show: the loader stands where the
-    // button stood, and nothing is offered while it is working
-    credBusy('#pushBusy','adding','#mPush');
+    // the panel runs the page's band on its own top edge while it writes
+    m.pushing=true; paneWriting(true);
+    pushBusy(true);
     setTimeout(()=>{
-      credBusy('#pushBusy','','#mPush');
+      m.pushing=false;
       m.applied=true;
+      m.addedN=sel.length; m.addedAt=fmtWhen(NOW); m.addedOff=false;
+      /* The panel may have moved on while this was in flight. The record belongs
+         to the model either way; only the panel actually showing it reports back,
+         and opening it again picks the record up. */
+      if(st.sel!==m.id)return;
+      paneWriting(false);
+      pushBusy(false);
+      paintPaneNote(m);
       syncBar();
-      flashAdded(sel.length,mets.length);
-    },900);
+    },3000);   // long enough that the band and the spinner are actually read
     return true;
   };
   $('#mPush').onclick=()=>pushSelected();
@@ -5455,50 +5604,29 @@ function renderPane(){
      portal, so there is nothing for this page to report back. */
 }
 
-/* Confirmation is the counter, not a second line beside it: the same figures
-   change what they are counting for a few seconds, sweep once, and go back to the
-   selection. Anything the user does in the meantime repaints the bar and takes the
-   confirmation with it, which is the right outcome -- it no longer holds. */
-/* two independent timers: CPT holds the counter's confirmation, CPD the copy note
-   beside it -- one clearing the other is how a note could be left stranded */
-let CPT=null, CPD=null, SYNCBAR=null, HOLD=false;
-/* The word after the figure, swapped by running the line to the new width rather
-   than cutting to it -- out to admit a longer one, back in for a shorter. It is the
-   width that animates, not a cap: a cap can hold a growth back but has nothing to
-   hold during a shrink, so the line would snap in and only ever animate one way.
-   The two widths are measured and applied in the same tick, read back rather than
-   scheduled, since a backgrounded tab never gets its frame. */
-function countWord(text){
-  const el=$('#mCountWord'); if(!el)return;
-  const from=el.offsetWidth;
-  el.textContent=text;
-  el.style.width='auto';
-  const to=el.offsetWidth;
-  el.style.width=from+'px';
-  void el.offsetWidth;                 // pin the start before moving to the end
-  el.style.width=to+'px';
-}
-/* One pass of light over the whole phrase, figure included -- it is one statement,
-   so the sweep belongs to the line rather than to each half of it. */
-function paintCount(n,total,word,accent){
+/* the copy note's own timer; nothing else beside the counter is on a clock */
+let CPD=null;
+/* The counter counts and nothing else -- what the write produced is the panel's
+   banner, which stands until it is closed. The figure still travels rather than
+   cutting: gaining a digit changes the line's length, and collapseX, the helper
+   the lists' select-all uses, moves it as one. */
+function paintCount(n,total){
   $('#mCountNum').textContent=`${n}/${total}`;
-  $('#mCountRun').classList.toggle('sweepacc',!!accent);
-  countWord(word);
+  $('#mCountWord').textContent='selected';
+  collapseX('#mCountFold',true,false);   // it changes length, never presence
 }
-/* Once the instructions are in, they are in: editing the selection afterwards does not
-   take that back, so the confirmation holds its full three seconds whatever the
-   user does next. */
-function flashAdded(n,total){
-  HOLD=true;
-  paintCount(n,total,'added to model',true);
-  $('#mCount').classList.add('strong');
-  clearTimeout(CPT);
-  CPT=setTimeout(()=>{HOLD=false;if(SYNCBAR)SYNCBAR();},3600);
+/* Adding is the button's own state: it keeps its place and its colour, takes the
+   spinner as a leading icon and says what it is doing. */
+function pushBusy(on){
+  const btn=$('#mPush'); if(!btn)return;
+  btn.classList.toggle('is-busy',on);
+  btn.querySelector('.rad-btn__icon').innerHTML=on?SPIN(16,'white'):'';
+  btn.querySelector('.rad-btn__label').textContent=on?'Adding':'Add to model';
 }
 function flashCopied(){
   const el=$('#mCopied'); if(!el)return;
   // a leading space would collapse at the start of the clipped box
-  el.innerHTML='&nbsp;<span class="mono sweepacc">and copied</span>';
+  el.innerHTML='&nbsp;<span class="sweepacc">and copied</span>';
   el.style.maxWidth=el.scrollWidth+'px';       // content width, measured while collapsed
   el.classList.add('on');
   clearTimeout(CPD);
@@ -5558,8 +5686,7 @@ function placeOver(){
   const w=el.offsetWidth,h=el.offsetHeight;
   // the panel's own bar is the real floor, not the window: a card must not land
   // on top of the bar it would otherwise cover
-  const bar=$('#metBar').classList.contains('on')?$('#metBar .inner').getBoundingClientRect():null;
-  const floor=(bar?bar.top:innerHeight)-12;
+  const floor=innerHeight-12;
   let l=Math.max(12,r.left),t=r.bottom+8;
   if(l+w>innerWidth-12)l=Math.max(12,innerWidth-12-w);
   if(t+h>floor)t=Math.max(12,r.top-8-h);            // flip above when it won't fit
@@ -5572,6 +5699,7 @@ function openOver(anchor,key,cls,html,wire){
   el.className='pop '+cls;el.innerHTML=html;
   document.body.appendChild(el);
   OVER.el=el;OVER.anchor=anchor;OVER.key=key;
+  const xb=el.querySelector('[data-ex-x]');if(xb)xb.onclick=closeOver;
   placeOver();
   if(wire)wire(el);
   // the timer is the guarantee: rAF is throttled in a backgrounded tab, and the
@@ -5590,37 +5718,38 @@ document.addEventListener('scroll',placeOver,true);
 
 function showSrc(x,anchor){
   if(!x.src)return;
+  /* the source reads as an Explainer card: what the rule is, the evidence behind
+     it, and the query it was read from sitting in the card's media slot */
   openOver(anchor,'src:'+anchor.dataset.src,'psrc',
-    `<span class="lbl ptitle">${escHTML(x.src.t)}</span>
-     <div class="ev mono dim">${escHTML(x.src.ev)}</div>
-     <pre>${escHTML(x.src.sql)}</pre>`);
+    EXCARD({title:escHTML(x.src.t),
+            body:`<span class="evline mono dim">${escHTML(x.src.ev)}</span>`,
+            media:`<pre>${escHTML(x.src.sql).split('\n')
+                     .map(l=>`<span>${l}</span>`).join('')}</pre>`}));
 }
 const WRONG=['Wrong definition','Not a real rule','Duplicate','Too narrow','Reads badly'];
 function askWrong(m,i,anchor){
   const x=m.mets[i];
   openOver(anchor,'down:'+i,'pdown',
-    `<span class="lbl ptitle">What went wrong?</span>
-     <div class="chips">${WRONG.map(w=>
-       `<button type="button" class="rad-trigger rad-trigger--filter chip${
-          (x.wrong||[]).includes(w)?' is-active':''}" data-w="${escAttr(w)}">${w}</button>`).join('')}</div>
-     <div class="prow"><div class="rad-field"><div class="rad-field__box"><input
-        placeholder="Anything else? (optional)" value="${escAttr(x.wnote||'')}"></div></div></div>
-     <div class="prow"><span class="sp"></span>
-       <button class="rad-btn rad-btn--basic rad-btn--primary" data-go>Send feedback</button></div>`,
+    EXCARD({title:'What went wrong?',
+      /* Radiant's token chip: the gray token at rest, the blue one once picked. */
+      body:`<div class="chips">${WRONG.map(w=>
+         `<button type="button" data-w="${escAttr(w)}" class="chip rad-chip rad-chip--${
+            (x.wrong||[]).includes(w)?'attribute':'filter'}"
+            ><span class="rad-chip__label">${w}</span></button>`).join('')}</div>
+        <div class="rad-field"><div class="rad-field__box"><input
+           placeholder="Anything else? (optional)" value="${escAttr(x.wnote||'')}"></div></div>`,
+      actions:`<button class="rad-btn rad-btn--basic rad-btn--primary" data-go>Send feedback</button>`}),
     el=>{
       const inp=el.querySelector('input');
       el.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{
         const w=ch.dataset.w,list=x.wrong||(x.wrong=[]);   // any number of reasons
         const at=list.indexOf(w);
         at<0?list.push(w):list.splice(at,1);
-        ch.classList.toggle('is-active',at<0);
+        ch.classList.toggle('rad-chip--attribute',at<0);
+        ch.classList.toggle('rad-chip--filter',at>=0);
       });
       inp.oninput=()=>x.wnote=inp.value;
-      el.querySelector('[data-go]').onclick=()=>{
-        const btn=el.querySelector('[data-go]');
-        btn.textContent='Sent ✓';btn.disabled=true;
-        setTimeout(closeOver,700);
-      };
+      el.querySelector('[data-go]').onclick=closeOver;   // sending closes the card
     });
 }
 const escAttr=s=>escHTML(s).replace(/"/g,'&quot;');
@@ -5903,6 +6032,7 @@ function proto(k){
 /* ============================== BOOT ============================== */
 /* the one Radiant glyph that lives in static markup rather than in a template */
 $('.rad-breadcrumb__back').innerHTML=RIC('arrow-left',14);
+$('.ctaicon').innerHTML=RIC('play',16);
 $('#stepWarnIcon').innerHTML=RIC('exclamation-point-circle',16);
 $('#stepWarnXIcon').innerHTML=RIC('cross',14);
 $('#stepWarnX').onclick=clearWarn;
